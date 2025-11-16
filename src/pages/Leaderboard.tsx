@@ -72,7 +72,7 @@ const Leaderboard = () => {
               <Settings className="w-5 h-5" />
               <span>Settings</span>
             </Link>
-            <Link to="#" className="flex items-center gap-3 p-2 rounded-md hover:bg-muted">
+            <Link to="/help" className="flex items-center gap-3 p-2 rounded-md hover:bg-muted">
                 <HelpCircle className="w-5 h-5" />
                 <span>Help</span>
             </Link>

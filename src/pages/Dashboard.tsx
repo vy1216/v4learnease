@@ -1,5 +1,5 @@
 import { useNavigate, Link } from "react-router-dom";
-import { ChangeEvent, useState } from "react";
+import { ChangeEvent, useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -15,6 +15,10 @@ const Dashboard = () => {
   const navigate = useNavigate();
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [fileName, setFileName] = useState("");
+  const [latestQuiz, setLatestQuiz] = useState<{ score: number; total: number; avgTimeMs: number; improvements: { topic: string; count: number }[] } | null>(null);
+  const [latestResultId, setLatestResultId] = useState<string | null>(null);
+  const [showReport, setShowReport] = useState(false);
+  const [report, setReport] = useState<{ quizId: string; topic: string; score: number; total: number; avgTimeMs: number; items: { id: string; type: string; question: string; options: string[]; correctAnswer: string; userAnswer: string; correct: boolean; difficulty: string; timeMs: number; explanation: string; topic: string }[]; advice: string[] } | null>(null);
 
   const handleSignOut = () => {
     localStorage.removeItem('authToken');
@@ -52,6 +56,40 @@ const Dashboard = () => {
       }
     }
   };
+
+  useEffect(() => {
+    const fetchResults = async () => {
+      try {
+        const res = await fetch('http://localhost:3002/api/quiz-results');
+        if (res.ok) {
+          const js = await res.json();
+          const last = js[js.length - 1];
+          if (last) {
+            setLatestQuiz({ score: last.score, total: last.total, avgTimeMs: last.avgTimeMs, improvements: last.improvements });
+            setLatestResultId(last.id);
+          }
+        }
+      } catch { void 0; }
+    };
+    fetchResults();
+  }, []);
+
+  const openReport = async () => {
+    if (!latestResultId) return;
+    try {
+      const res = await fetch(`http://localhost:3002/api/quiz-report/${latestResultId}`);
+      if (!res.ok) {
+        alert('No detailed report found. Please complete a new quiz.');
+        return;
+      }
+      const js = await res.json();
+      setReport(js);
+      setShowReport(true);
+    } catch {
+      alert('Could not load quiz details. Please try again.');
+    }
+  };
+  const closeReport = () => setShowReport(false);
 
 
   return (
@@ -96,7 +134,7 @@ const Dashboard = () => {
                     <Settings className="w-5 h-5" />
                     <span>Settings</span>
                 </Link>
-                <Link to="#" className="flex items-center gap-3 p-2 rounded-md hover:bg-muted">
+                <Link to="/help" className="flex items-center gap-3 p-2 rounded-md hover:bg-muted">
                     <HelpCircle className="w-5 h-5" />
                     <span>Help</span>
                 </Link>
@@ -379,6 +417,90 @@ const Dashboard = () => {
                 </Card>
             </div>
         </section>
+
+        <section className="mt-8">
+          <h2 className="text-lg font-semibold text-muted-foreground mb-4">Latest Quiz Result</h2>
+          <Card className="bg-muted/20 border-border">
+            <CardContent className="pt-6">
+              {latestQuiz ? (
+                <>
+                <div className="grid grid-cols-3 gap-4">
+                  <div>
+                    <p className="text-sm text-muted-foreground">Score</p>
+                    <p className="text-2xl font-bold">{latestQuiz.score} / {latestQuiz.total}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-muted-foreground">Avg time</p>
+                    <p className="text-2xl font-bold">{Math.round(latestQuiz.avgTimeMs)} ms</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-muted-foreground">Focus</p>
+                    {latestQuiz.improvements.length === 0 ? (
+                      <p>None</p>
+                    ) : (
+                      latestQuiz.improvements.slice(0,3).map((imp, idx) => (
+                        <p key={idx} className="text-sm">{imp.topic}: {imp.count}</p>
+                      ))
+                    )}
+                  </div>
+                </div>
+                <div className="mt-4">
+                  <Button variant="secondary" onClick={openReport}>View full quiz details</Button>
+                </div>
+                </>
+              ) : (
+                <p className="text-sm text-muted-foreground">No recent quiz</p>
+              )}
+            </CardContent>
+          </Card>
+        </section>
+
+        {showReport && report && (
+          <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50">
+            <Card className="w-full max-w-4xl max-h-[80vh] overflow-y-auto">
+              <CardHeader>
+                <CardTitle>Quiz Details</CardTitle>
+                <CardDescription>Topic: {report.topic} • Score: {report.score}/{report.total} • Avg time: {Math.round(report.avgTimeMs)} ms</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-6">
+                  {report.items.map((it, idx) => (
+                    <div key={it.id} className="border rounded-md p-4">
+                      <p className="text-sm text-muted-foreground">Question {idx + 1} • {it.difficulty}</p>
+                      <p className="font-semibold mt-1">{it.question}</p>
+                      {it.options && it.options.length > 0 && (
+                        <div className="mt-2 text-sm">
+                          <p className="text-muted-foreground">Options: {it.options.join(', ')}</p>
+                        </div>
+                      )}
+                      <div className="mt-2 text-sm">
+                        <p>Your answer: <span className={it.correct ? 'text-green-500' : 'text-red-500'}>{it.userAnswer || '—'}</span></p>
+                        <p>Correct answer: <span className="text-green-500">{it.correctAnswer}</span></p>
+                        <p>Time: {it.timeMs} ms</p>
+                      </div>
+                      <p className="mt-2 text-sm">Explanation: {it.explanation}</p>
+                    </div>
+                  ))}
+                  <div>
+                    <p className="font-semibold mb-2">Advice</p>
+                    {report.advice.length === 0 ? (
+                      <p className="text-sm text-muted-foreground">No specific advice — great work.</p>
+                    ) : (
+                      <ul className="list-disc ml-6 text-sm">
+                        {report.advice.map((a, i) => (
+                          <li key={i}>{a}</li>
+                        ))}
+                      </ul>
+                    )}
+                  </div>
+                </div>
+                <div className="mt-4 flex justify-end">
+                  <Button onClick={closeReport}>Close</Button>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        )}
 
       </main>
     </div>

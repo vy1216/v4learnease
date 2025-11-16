@@ -29,6 +29,7 @@ const Mentor = () => {
   ]);
   const [userInput, setUserInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [uploadedIds, setUploadedIds] = useState<string[]>([]);
 
   const handleSignOut = () => {
     localStorage.removeItem('authToken');
@@ -50,8 +51,9 @@ const Mentor = () => {
         });
 
         if (!response.ok) throw new Error('Upload failed');
-
-        setMaterials(prevMaterials => [...prevMaterials, { name: file.name, pages: 0 }]); // Note: page count is a mock value
+        const data = await response.json();
+        setUploadedIds(prev => [...prev, data.id]);
+        setMaterials(prevMaterials => [...prevMaterials, { name: file.name, pages: 0 }]);
         alert("File uploaded successfully!");
       } catch (error) {
         console.error("Error uploading file:", error);
@@ -77,7 +79,7 @@ const Mentor = () => {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ user: currentInput }),
+        body: JSON.stringify({ user: currentInput, fileIds: uploadedIds }),
       });
 
       if (!response.ok) {
@@ -144,7 +146,7 @@ const Mentor = () => {
             <nav className="flex flex-col space-y-4">
                 <Link to="/profile" className="flex items-center gap-3 p-2 rounded-md hover:bg-gray-700/50"><Users2 className="w-5 h-5" /><span>Profile</span></Link>
                 <Link to="/settings" className="flex items-center gap-3 p-2 rounded-md hover:bg-gray-700/50"><Settings className="w-5 h-5" /><span>Settings</span></Link>
-                <Link to="#" className="flex items-center gap-3 p-2 rounded-md hover:bg-gray-700/50"><HelpCircle className="w-5 h-5" /><span>Help</span></Link>
+                <Link to="/help" className="flex items-center gap-3 p-2 rounded-md hover:bg-gray-700/50"><HelpCircle className="w-5 h-5" /><span>Help</span></Link>
             </nav>
         </div>
       </aside>
@@ -195,4 +197,4 @@ const Mentor = () => {
   );
 };
 
-export default Mentor; 
+export default Mentor;
