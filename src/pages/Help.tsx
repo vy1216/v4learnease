@@ -1,3 +1,4 @@
+import { supabase } from "@/lib/utils";
 import { Link } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
@@ -88,16 +89,16 @@ const Help = () => {
     if (e.target.files && e.target.files[0]) setSelectedFile(e.target.files[0]);
   };
 
-  const handleTestUpload = async () => {
+      const handleTestUpload = async () => {
     if (!selectedFile) return;
     setUploading(true);
+    if (!supabase) { setUploadResult("Supabase not configured"); setUploading(false); return; }
     try {
-      const fd = new FormData();
-      fd.append("file", selectedFile);
-      const res = await fetch("http://localhost:3002/api/upload", { method: "POST", body: fd });
-      if (!res.ok) throw new Error("Upload failed");
-      const js = await res.json();
-      setUploadResult(`Uploaded: ${js.name} • id ${js.id}`);
+      const filePath = `help-uploads/${Date.now()}_${selectedFile.name}`;
+      const { error } = await supabase.storage.from('uploads').upload(filePath, selectedFile, { upsert: true });
+      if (error) throw error;
+      const { data } = supabase.storage.from('uploads').getPublicUrl(filePath);
+      setUploadResult(`Uploaded: ${selectedFile.name}  url ${data.publicUrl}`);
     } catch (e) {
       setUploadResult("Upload failed");
     } finally {
@@ -196,3 +197,5 @@ const Help = () => {
 };
 
 export default Help;
+
+

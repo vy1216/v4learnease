@@ -18,11 +18,7 @@ const port = 3002;
 const JWT_SECRET = process.env.JWT_SECRET || 'your-default-secret';
 
 // Configure CORS properly
-app.use(cors({
-  origin: '*',
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization']
-}));
+const allowedOrigins = new Set([process.env.PUBLIC_FRONTEND_URL || '', 'http://localhost:5173', 'https://v4learnease.vercel.app']);\nconst corsOptions = { origin: (origin: any, callback: any) => { if (!origin || allowedOrigins.has(origin)) { callback(null, true); } else { callback(new Error('Not allowed by CORS')); } }, methods: ['GET','POST','PUT','DELETE','OPTIONS'], allowedHeaders: ['Content-Type','Authorization'], credentials: true };\napp.use(cors(corsOptions));\napp.options('*', cors(corsOptions));
 
 app.use(bodyParser.json());
 app.use('/uploads', express.static(path.join(__dirname, '../public/uploads')));
@@ -119,7 +115,8 @@ app.post('/api/materials', authenticateToken, upload.single('file'), async (req:
   const { name, description } = req.body;
   const file = req.file;
   if (!name || !file) return res.status(400).json({ error: 'Material name and file are required' });
-  const fileUrl = `http://localhost:${port}/uploads/${file.filename}`;
+  const baseUrl = process.env.PUBLIC_BASE_URL || `${req.protocol}://${req.get('host')}`;
+  const fileUrl = `${baseUrl}/uploads/${file.filename}`;
   const newMaterial = {
     id: `mat_${Date.now()}`,
     name,
@@ -168,7 +165,10 @@ app.post('/api/messages', async (req, res) => {
       for (const id of userMessage.fileIds) {
         const item = uploadsIndex.get(id);
         if (item && item.text) {
-          contextText += `\n\n[${item.name}]\n${item.text}`;
+          contextText += `
+
+[${item.name}]
+${item.text}`;
         }
       }
       if (contextText.length > 20000) {
@@ -400,7 +400,7 @@ app.get('/api/quiz-report/:resultId', (req, res) => {
 function buildContextAnswer(query: string, context: string): string {
   const q = (query || '').toLowerCase();
   const words = q.split(/[^a-z0-9]+/).filter(w => w.length >= 3);
-  const sentences = (context || '').split(/(?<=[.!?])\s+|\n+/).filter(s => s.trim().length > 0);
+  const sentences = (context || '').split(/(?<=[.!?])\s+/).filter(s => s.trim().length > 0);
   const scored = sentences.map(s => {
     const ls = s.toLowerCase();
     const score = words.reduce((acc, w) => acc + (ls.includes(w) ? 1 : 0), 0);
@@ -408,7 +408,7 @@ function buildContextAnswer(query: string, context: string): string {
   }).sort((a, b) => b.score - a.score);
   const picks = (scored[0]?.score ? scored.filter(x => x.score > 0) : scored).slice(0, 5).map(x => x.s.trim());
   if (picks.length === 0) return '';
-  return `Based on your materials, here are relevant excerpts:\n\n- ${picks.join('\n- ')}`;
+  return `Based on your materials, here are relevant excerpts:\n\n - ${picks.join('\n - ')}`;
 }
 
 function generateHelpfulReply(query: string): string {
@@ -434,7 +434,8 @@ app.post('/api/upload', upload.single('file'), async (req, res) => {
     return res.status(400).json({ error: 'No file uploaded' });
   }
   try {
-    const fileUrl = `http://localhost:${port}/uploads/${req.file.filename}`;
+    const baseUrl = process.env.PUBLIC_BASE_URL || `${req.protocol}://${req.get('host')}`;
+    const fileUrl = `${baseUrl}/uploads/${req.file.filename}`;
     const filePath = path.join(uploadsDir, req.file.filename);
     let text = '';
     const mime = req.file.mimetype || '';
@@ -459,3 +460,10 @@ app.post('/api/upload', upload.single('file'), async (req, res) => {
 app.listen(port, () => {
   console.log(`Server is running on http://localhost:${port}`);
 });
+
+
+
+
+
+
+

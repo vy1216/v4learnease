@@ -1,3 +1,4 @@
+import { apiUrl, supabase } from "@/lib/utils";
 
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -20,7 +21,7 @@ const Chat = () => {
   useEffect(() => {
     const fetchMessages = async () => {
       try {
-        const response = await fetch("http://localhost:3002/api/messages");
+        const response = await fetch(apiUrl("/api/messages"));
         const data = await response.json();
         setChatHistory(data);
       } catch (error) {
@@ -38,7 +39,7 @@ const Chat = () => {
   const handleSendMessage = async () => {
     if (message.trim() !== "") {
       try {
-        const response = await fetch("http://localhost:3002/api/messages", {
+        const response = await fetch(apiUrl("/api/messages"), {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
@@ -62,30 +63,26 @@ const Chat = () => {
     }
   };
 
-  const handleFileUpload = async () => {
+    const handleFileUpload = async () => {
     if (!selectedFile) {
       alert("Please select a file first");
       return;
     }
-    
+    if (!supabase) {
+      alert("Supabase is not configured. Set VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY.");
+      return;
+    }
     try {
-      const formData = new FormData();
-      formData.append('file', selectedFile);
-      
-      const response = await fetch("http://localhost:3002/api/upload", {
-        method: "POST",
-        body: formData,
-      });
-      
-      if (!response.ok) throw new Error('Upload failed');
-      const data = await response.json();
-      
-      setUploadedFiles([...uploadedFiles, { id: data.id, name: data.name || selectedFile.name, url: data.url }]);
+      const filePath = `user-uploads/${Date.now()}_${selectedFile.name}`;
+      const { error } = await supabase.storage.from('uploads').upload(filePath, selectedFile, { upsert: true });
+      if (error) throw error;
+      const { data } = supabase.storage.from('uploads').getPublicUrl(filePath);
+      const publicUrl = data.publicUrl;
+      setUploadedFiles([...uploadedFiles, { id: filePath, name: selectedFile.name, url: publicUrl }]);
       setSelectedFile(null);
       setFileName("");
       alert("File uploaded successfully!");
     } catch (error) {
-      console.error("Error uploading file:", error);
       alert("Failed to upload file");
     }
   };
@@ -98,7 +95,7 @@ const Chat = () => {
   const handleGenerateQuiz = async () => {
     const topic = (message || '').trim() || (chatHistory[chatHistory.length - 1]?.user || '').trim();
     try {
-      const response = await fetch('http://localhost:3002/api/quiz/generate', {
+      const response = await fetch(apiUrl('/api/quiz/generate'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ topic, history: chatHistory }),
@@ -236,3 +233,10 @@ const Chat = () => {
 };
 
 export default Chat;
+
+
+
+
+
+
+

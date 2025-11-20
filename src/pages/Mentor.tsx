@@ -1,3 +1,4 @@
+import { apiUrl, supabase } from "@/lib/utils";
 
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -37,26 +38,21 @@ const Mentor = () => {
   };
 
   // --- FILE UPLOAD HANDLER ---
-  const handleFileChange = async (e: ChangeEvent<HTMLInputElement>) => {
+    const handleFileChange = async (e: ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
       const file = e.target.files[0];
       alert(`Uploading ${file.name}...`);
-      const formData = new FormData();
-      formData.append('file', file);
-
+      if (!supabase) {
+        alert("Supabase is not configured. Set VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY.");
+        return;
+      }
       try {
-        const response = await fetch('http://localhost:3002/api/upload', {
-          method: 'POST',
-          body: formData,
-        });
-
-        if (!response.ok) throw new Error('Upload failed');
-        const data = await response.json();
-        setUploadedIds(prev => [...prev, data.id]);
+        const filePath = `mentor-materials/${Date.now()}_${file.name}`;
+        const { error } = await supabase.storage.from('uploads').upload(filePath, file, { upsert: true });
+        if (error) throw error;
         setMaterials(prevMaterials => [...prevMaterials, { name: file.name, pages: 0 }]);
         alert("File uploaded successfully!");
       } catch (error) {
-        console.error("Error uploading file:", error);
         alert("Failed to upload file.");
       }
     }
@@ -74,7 +70,7 @@ const Mentor = () => {
     setIsLoading(true);
 
     try {
-      const response = await fetch('http://localhost:3002/api/messages', {
+      const response = await fetch(apiUrl('/api/messages'), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -198,3 +194,5 @@ const Mentor = () => {
 };
 
 export default Mentor;
+
+
