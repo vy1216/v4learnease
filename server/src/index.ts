@@ -119,7 +119,7 @@ app.post('/api/materials', authenticateToken, upload.single('file'), async (req:
   const { name, description } = req.body;
   const file = req.file;
   if (!name || !file) return res.status(400).json({ error: 'Material name and file are required' });
-  const fileUrl = `http://localhost:${port}/uploads/${file.filename}`;
+  const baseUrl = process.env.PUBLIC_BASE_URL || `${req.protocol}://${req.get('host')}`;\n  const fileUrl = `${baseUrl}/uploads/${file.filename}`;
   const newMaterial = {
     id: `mat_${Date.now()}`,
     name,
@@ -434,7 +434,7 @@ app.post('/api/upload', upload.single('file'), async (req, res) => {
     return res.status(400).json({ error: 'No file uploaded' });
   }
   try {
-    const fileUrl = `http://localhost:${port}/uploads/${req.file.filename}`;
+    const baseUrl = process.env.PUBLIC_BASE_URL || `${req.protocol}://${req.get('host')}`;\n    const fileUrl = `${baseUrl}/uploads/${req.file.filename}`;
     const filePath = path.join(uploadsDir, req.file.filename);
     let text = '';
     const mime = req.file.mimetype || '';
@@ -459,3 +459,4 @@ app.post('/api/upload', upload.single('file'), async (req, res) => {
 app.listen(port, () => {
   console.log(`Server is running on http://localhost:${port}`);
 });
+

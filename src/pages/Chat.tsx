@@ -1,3 +1,4 @@
+import { apiUrl } from "@/lib/utils";
 
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -20,7 +21,7 @@ const Chat = () => {
   useEffect(() => {
     const fetchMessages = async () => {
       try {
-        const response = await fetch("http://localhost:3002/api/messages");
+        const response = await fetch(apiUrl("/api/messages"));
         const data = await response.json();
         setChatHistory(data);
       } catch (error) {
@@ -38,7 +39,7 @@ const Chat = () => {
   const handleSendMessage = async () => {
     if (message.trim() !== "") {
       try {
-        const response = await fetch("http://localhost:3002/api/messages", {
+        const response = await fetch(apiUrl("/api/messages"), {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
@@ -72,7 +73,7 @@ const Chat = () => {
       const formData = new FormData();
       formData.append('file', selectedFile);
       
-      const response = await fetch("http://localhost:3002/api/upload", {
+      const response = await fetch(apiUrl("/api/upload"), {
         method: "POST",
         body: formData,
       });
@@ -236,3 +237,7 @@ const Chat = () => {
 };
 
 export default Chat;
+
+
+
+
