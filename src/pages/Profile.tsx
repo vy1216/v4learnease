@@ -1,3 +1,4 @@
+import { supabase } from "@/lib/utils";
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -13,27 +14,21 @@ const Profile = () => {
     navigate("/auth");
   };
 
-  const handleImageUpload = async (e: ChangeEvent<HTMLInputElement>) => {
+    const handleImageUpload = async (e: ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
       const file = e.target.files[0];
-      const formData = new FormData();
-      formData.append('file', file);
-
+      if (!supabase) {
+        alert("Supabase is not configured. Set VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY.");
+        return;
+      }
       try {
-        const response = await fetch('http://localhost:3002/api/upload', {
-          method: 'POST',
-          body: formData,
-        });
-
-        if (response.ok) {
-          const data = await response.json();
-          setUserImage(data.url);
-          alert("Profile picture updated successfully!");
-        } else {
-          alert("Failed to upload image.");
-        }
+        const filePath = `profile-images/${Date.now()}_${file.name}`;
+        const { error } = await supabase.storage.from('uploads').upload(filePath, file, { upsert: true });
+        if (error) throw error;
+        const { data } = supabase.storage.from('uploads').getPublicUrl(filePath);
+        setUserImage(data.publicUrl);
+        alert("Profile picture updated successfully!");
       } catch (error) {
-        console.error("Error uploading image:", error);
         alert("Failed to upload image.");
       }
     }
@@ -172,3 +167,4 @@ const Profile = () => {
 };
 
 export default Profile;
+

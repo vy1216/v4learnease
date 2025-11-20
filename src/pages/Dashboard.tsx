@@ -1,3 +1,4 @@
+import { apiUrl, supabase } from "@/lib/utils";
 import { useNavigate, Link } from "react-router-dom";
 import { ChangeEvent, useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
@@ -32,26 +33,20 @@ const Dashboard = () => {
     }
   };
 
-  const handleFileUpload = async () => {
+    const handleFileUpload = async () => {
     if (selectedFile) {
-      const formData = new FormData();
-      formData.append('file', selectedFile);
-
+      if (!supabase) {
+        alert("Supabase is not configured. Set VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY.");
+        return;
+      }
       try {
-        const response = await fetch('http://localhost:3002/api/upload', {
-          method: 'POST',
-          body: formData,
-        });
-
-        if (response.ok) {
-          alert("File uploaded successfully!");
-          setSelectedFile(null);
-          setFileName("");
-        } else {
-          alert("Failed to upload file.");
-        }
+        const filePath = `dashboard-uploads/${Date.now()}_${selectedFile.name}`;
+        const { error } = await supabase.storage.from('uploads').upload(filePath, selectedFile, { upsert: true });
+        if (error) throw error;
+        alert("File uploaded successfully!");
+        setSelectedFile(null);
+        setFileName("");
       } catch (error) {
-        console.error("Error uploading file:", error);
         alert("Failed to upload file.");
       }
     }
@@ -60,7 +55,7 @@ const Dashboard = () => {
   useEffect(() => {
     const fetchResults = async () => {
       try {
-        const res = await fetch('http://localhost:3002/api/quiz-results');
+        const res = await fetch(apiUrl('/api/quiz-results'));
         if (res.ok) {
           const js = await res.json();
           const last = js[js.length - 1];
@@ -508,3 +503,4 @@ const Dashboard = () => {
 };
 
 export default Dashboard;
+
