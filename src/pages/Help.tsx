@@ -1,3 +1,4 @@
+import { supabase } from "@/lib/utils";
 import { Link } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
@@ -88,23 +89,7 @@ const Help = () => {
     if (e.target.files && e.target.files[0]) setSelectedFile(e.target.files[0]);
   };
 
-  const handleTestUpload = async () => {
-    if (!selectedFile) return;
-    setUploading(true);
-    try {
-      const fd = new FormData();
-      fd.append("file", selectedFile);
-      const res = await fetch("http://localhost:3002/api/upload", { method: "POST", body: fd });
-      if (!res.ok) throw new Error("Upload failed");
-      const js = await res.json();
-      setUploadResult(`Uploaded: ${js.name} • id ${js.id}`);
-    } catch (e) {
-      setUploadResult("Upload failed");
-    } finally {
-      setUploading(false);
-      setSelectedFile(null);
-    }
-  };
+    const handleTestUpload = async () => {\n    if (!selectedFile) return;\n    setUploading(true);\n    if (!supabase) { setUploadResult('Supabase not configured'); setUploading(false); return; }\n    try {\n      const filePath = help-uploads/_;\n      const { error } = await supabase.storage.from('uploads').upload(filePath, selectedFile, { upsert: true });\n      if (error) throw error;\n      const { data } = supabase.storage.from('uploads').getPublicUrl(filePath);\n      setUploadResult(Uploaded:   url );\n    } catch (e) {\n      setUploadResult('Upload failed');\n    } finally {\n      setUploading(false);\n      setSelectedFile(null);\n    }\n  };
 
   return (
     <div className="min-h-screen bg-background text-foreground flex">
