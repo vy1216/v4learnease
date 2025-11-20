@@ -89,7 +89,23 @@ const Help = () => {
     if (e.target.files && e.target.files[0]) setSelectedFile(e.target.files[0]);
   };
 
-    const handleTestUpload = async () => {\n    if (!selectedFile) return;\n    setUploading(true);\n    if (!supabase) { setUploadResult('Supabase not configured'); setUploading(false); return; }\n    try {\n      const filePath = help-uploads/_;\n      const { error } = await supabase.storage.from('uploads').upload(filePath, selectedFile, { upsert: true });\n      if (error) throw error;\n      const { data } = supabase.storage.from('uploads').getPublicUrl(filePath);\n      setUploadResult(Uploaded:   url );\n    } catch (e) {\n      setUploadResult('Upload failed');\n    } finally {\n      setUploading(false);\n      setSelectedFile(null);\n    }\n  };
+      const handleTestUpload = async () => {
+    if (!selectedFile) return;
+    setUploading(true);
+    if (!supabase) { setUploadResult("Supabase not configured"); setUploading(false); return; }
+    try {
+      const filePath = `help-uploads/${Date.now()}_${selectedFile.name}`;
+      const { error } = await supabase.storage.from('uploads').upload(filePath, selectedFile, { upsert: true });
+      if (error) throw error;
+      const { data } = supabase.storage.from('uploads').getPublicUrl(filePath);
+      setUploadResult(`Uploaded: ${selectedFile.name}  url ${data.publicUrl}`);
+    } catch (e) {
+      setUploadResult("Upload failed");
+    } finally {
+      setUploading(false);
+      setSelectedFile(null);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-background text-foreground flex">
@@ -181,3 +197,4 @@ const Help = () => {
 };
 
 export default Help;
+
