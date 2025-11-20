@@ -95,7 +95,7 @@ const Help = () => {
     if (!supabase) { setUploadResult("Supabase not configured"); setUploading(false); return; }
     try {
       const filePath = `help-uploads/${Date.now()}_${selectedFile.name}`;
-      const { error } = await supabase.storage.from('uploads').upload(filePath, selectedFile, { upsert: true });
+      const { error } = await supabase.storage.from('uploads').upload(filePath, selectedFile, { upsert: true, contentType: selectedFile.type || 'application/octet-stream' });
       if (error) throw error;
       const { data } = supabase.storage.from('uploads').getPublicUrl(filePath);
       setUploadResult(`Uploaded: ${selectedFile.name}  url ${data.publicUrl}`);
@@ -197,5 +197,6 @@ const Help = () => {
 };
 
 export default Help;
+
 
 

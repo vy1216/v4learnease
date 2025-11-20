@@ -74,7 +74,7 @@ const Chat = () => {
     }
     try {
       const filePath = `user-uploads/${Date.now()}_${selectedFile.name}`;
-      const { error } = await supabase.storage.from('uploads').upload(filePath, selectedFile, { upsert: true });
+      const { error } = await supabase.storage.from('uploads').upload(filePath, selectedFile, { upsert: true, contentType: selectedFile.type || 'application/octet-stream' });
       if (error) throw error;
       const { data } = supabase.storage.from('uploads').getPublicUrl(filePath);
       const publicUrl = data.publicUrl;
@@ -233,6 +233,7 @@ const Chat = () => {
 };
 
 export default Chat;
+
 
 
 

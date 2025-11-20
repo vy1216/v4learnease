@@ -48,7 +48,7 @@ const Mentor = () => {
       }
       try {
         const filePath = `mentor-materials/${Date.now()}_${file.name}`;
-        const { error } = await supabase.storage.from('uploads').upload(filePath, file, { upsert: true });
+        const { error } = await supabase.storage.from('uploads').upload(filePath, file, { upsert: true, contentType: file.type || 'application/octet-stream' });
         if (error) throw error;
         setMaterials(prevMaterials => [...prevMaterials, { name: file.name, pages: 0 }]);
         alert("File uploaded successfully!");
@@ -194,5 +194,6 @@ const Mentor = () => {
 };
 
 export default Mentor;
+
 
 

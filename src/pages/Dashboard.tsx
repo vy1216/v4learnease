@@ -41,7 +41,7 @@ const Dashboard = () => {
       }
       try {
         const filePath = `dashboard-uploads/${Date.now()}_${selectedFile.name}`;
-        const { error } = await supabase.storage.from('uploads').upload(filePath, selectedFile, { upsert: true });
+        const { error } = await supabase.storage.from('uploads').upload(filePath, selectedFile, { upsert: true, contentType: selectedFile.type || 'application/octet-stream' });
         if (error) throw error;
         alert("File uploaded successfully!");
         setSelectedFile(null);
@@ -503,5 +503,6 @@ const Dashboard = () => {
 };
 
 export default Dashboard;
+
 
 

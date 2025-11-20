@@ -23,7 +23,7 @@ const Profile = () => {
       }
       try {
         const filePath = `profile-images/${Date.now()}_${file.name}`;
-        const { error } = await supabase.storage.from('uploads').upload(filePath, file, { upsert: true });
+        const { error } = await supabase.storage.from('uploads').upload(filePath, file, { upsert: true, contentType: file.type || 'application/octet-stream' });
         if (error) throw error;
         const { data } = supabase.storage.from('uploads').getPublicUrl(filePath);
         setUserImage(data.publicUrl);
@@ -167,5 +167,6 @@ const Profile = () => {
 };
 
 export default Profile;
+
 
 
