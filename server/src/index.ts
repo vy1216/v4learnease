@@ -14,7 +14,7 @@ const pdfParseAny: any = require('pdf-parse');
 dotenv.config();
 
 const app = express();
-const port = 3002;
+const port = process.env.PORT ? Number(process.env.PORT) : 3002;
 const JWT_SECRET = process.env.JWT_SECRET || 'your-default-secret';
 
 // Configure CORS properly
@@ -481,6 +481,7 @@ app.post('/api/upload', upload.single('file'), async (req, res) => {
 app.listen(port, () => {
   console.log(`Server is running on http://localhost:${port}`);
 });
+
 
 
 
