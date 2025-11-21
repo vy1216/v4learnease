@@ -18,7 +18,25 @@ const port = 3002;
 const JWT_SECRET = process.env.JWT_SECRET || 'your-default-secret';
 
 // Configure CORS properly
-const allowedOrigins = new Set([process.env.PUBLIC_FRONTEND_URL || '', 'http://localhost:5173', 'https://v4learnease.vercel.app']);\nconst corsOptions = { origin: (origin: any, callback: any) => { if (!origin || allowedOrigins.has(origin)) { callback(null, true); } else { callback(new Error('Not allowed by CORS')); } }, methods: ['GET','POST','PUT','DELETE','OPTIONS'], allowedHeaders: ['Content-Type','Authorization'], credentials: true };\napp.use(cors(corsOptions));\napp.options('*', cors(corsOptions));
+const allowedOrigins = new Set([
+  process.env.PUBLIC_FRONTEND_URL || '',
+  'http://localhost:5173',
+  'https://v4learnease.vercel.app',
+]);
+const corsOptions = {
+  origin: (origin: any, callback: any) => {
+    if (!origin || allowedOrigins.has(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
+  credentials: true,
+};
+app.use(cors(corsOptions));
+app.options('*', cors(corsOptions));
 
 app.use(bodyParser.json());
 app.use('/uploads', express.static(path.join(__dirname, '../public/uploads')));
